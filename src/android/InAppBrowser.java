@@ -796,11 +796,21 @@ public class InAppBrowser extends CordovaPlugin {
                 };
 
                 // Let's create the main dialog
-                dialog = new InAppBrowserDialog(cordova.getActivity(), android.R.style.Theme_NoTitleBar);
+                dialog = new InAppBrowserDialog(cordova.getActivity(),fullscreen ? android.R.style.Theme_NoTitleBar : android.R.style.Theme_Black);
                 dialog.getWindow().getAttributes().windowAnimations = android.R.style.Animation_Dialog;
-                dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+                dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);               
                 if (fullscreen) {
                     dialog.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+                }
+                else {
+                    // dialog.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+                    dialog.getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+                    dialog.getWindow().addFlags(WindowManager.LayoutParams
+                            .FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        dialog.getWindow().setStatusBarColor(Color.TRANSPARENT);
+                        dialog.getWindow().setNavigationBarColor(Color.TRANSPARENT);
+                    }
                 }
                 dialog.setCancelable(true);
                 dialog.setInAppBroswer(getInAppBrowser());
