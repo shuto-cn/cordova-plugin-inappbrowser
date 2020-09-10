@@ -68,6 +68,8 @@ interface InAppBrowser extends Window {
      * if the InAppBrowser was already visible.
      */
     show(): void;
+
+    back(): void;
     /**
      * Injects JavaScript code into the InAppBrowser window.
      * @param script    Details of the script to run, specifying either a file or code key.
