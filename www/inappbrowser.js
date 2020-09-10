@@ -60,6 +60,9 @@
         hide: function (eventname) {
             exec(null, null, 'InAppBrowser', 'hide', []);
         },
+        back: function(eventname) {
+            exec(null, null, 'InAppBrowser', 'back', []);
+        },
         addEventListener: function (eventname, f) {
             if (eventname in this.channels) {
                 this.channels[eventname].subscribe(f);
