@@ -347,6 +347,15 @@ static CDVWKInAppBrowser* instance = nil;
         }
     });
 }
+- (void)back:(CDVInvokedUrlCommand *)command
+{
+    if([self.inAppBrowserViewController.webView canGoBack]){
+        [self.inAppBrowserViewController.webView goBack];
+    } else {
+        [self close:(command)];
+    }
+}
+
 
 - (void)openInCordovaWebView:(NSURL*)url withOptions:(NSString*)options
 {
