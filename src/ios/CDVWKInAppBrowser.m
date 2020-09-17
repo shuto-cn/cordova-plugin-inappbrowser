@@ -35,7 +35,7 @@
 #define    IAB_BRIDGE_NAME @"cordova_iab"
 
 #define    TOOLBAR_HEIGHT 44.0
-#define    STATUSBAR_HEIGHT 20.0
+#define    STATUSBAR_HEIGHT 0
 #define    LOCATIONBAR_HEIGHT 21.0
 #define    FOOTER_HEIGHT ((TOOLBAR_HEIGHT) + (LOCATIONBAR_HEIGHT))
 
@@ -74,7 +74,11 @@ static CDVWKInAppBrowser* instance = nil;
         NSLog(@"IAB.close() called but it was already closed.");
         return;
     }
-    
+    UIView *lastView;
+    for(UIView *subview in [self.viewController.view subviews]) {
+        lastView = subview;
+    }
+    [lastView removeFromSuperview];
     // Things are cleaned up in browserExit.
     [self.inAppBrowserViewController close];
 }
@@ -297,24 +301,26 @@ static CDVWKInAppBrowser* instance = nil;
     // Run later to avoid the "took a long time" log message.
     dispatch_async(dispatch_get_main_queue(), ^{
         if (weakSelf.inAppBrowserViewController != nil) {
-            float osVersion = [[[UIDevice currentDevice] systemVersion] floatValue];
-            __strong __typeof(weakSelf) strongSelf = weakSelf;
-            if (!strongSelf->tmpWindow) {
-                CGRect frame = [[UIScreen mainScreen] bounds];
-                if(initHidden && osVersion < 11){
-                   frame.origin.x = -10000;
-                }
-                strongSelf->tmpWindow = [[UIWindow alloc] initWithFrame:frame];
-            }
-            UIViewController *tmpController = [[UIViewController alloc] init];
-
-            [strongSelf->tmpWindow setRootViewController:tmpController];
-            [strongSelf->tmpWindow setWindowLevel:UIWindowLevelNormal];
-
-            if(!initHidden || osVersion < 11){
-                [self->tmpWindow makeKeyAndVisible];
-            }
-            [tmpController presentViewController:nav animated:!noAnimate completion:nil];
+//            float osVersion = [[[UIDevice currentDevice] systemVersion] floatValue];
+//            __strong __typeof(weakSelf) strongSelf = weakSelf;
+//            if (!strongSelf->tmpWindow) {
+//                CGRect frame = [[UIScreen mainScreen] bounds];
+//                if(initHidden && osVersion < 11){
+//                   frame.origin.x = -10000;
+//                }
+//                strongSelf->tmpWindow = [[UIWindow alloc] initWithFrame:frame];
+//            }
+//            UIViewController *tmpController = [[UIViewController alloc] init];
+//
+//            [strongSelf->tmpWindow setRootViewController:tmpController];
+//            [strongSelf->tmpWindow setWindowLevel:UIWindowLevelNormal];
+//
+//            if(!initHidden || osVersion < 11){
+//                [self->tmpWindow makeKeyAndVisible];
+//            }
+            // [tmpController presentViewController:nav animated:!noAnimate completion:nil];
+            self.inAppBrowserViewController.view.frame = CGRectMake(0,STATUSBAR_HEIGHT,self.inAppBrowserViewController.view.frame.size.width,self.inAppBrowserViewController.view.frame.size.height-STATUSBAR_HEIGHT);
+            [self.viewController.view addSubview:self.inAppBrowserViewController.view];
         }
     });
 }
