@@ -39,6 +39,8 @@
 @property (nonatomic, copy) NSString* callbackId;
 @property (nonatomic, copy) NSRegularExpression *callbackIdPattern;
 
+@property (nonatomic) BOOL* statusbar;
+
 + (id) getInstance;
 - (void)open:(CDVInvokedUrlCommand*)command;
 - (void)close:(CDVInvokedUrlCommand*)command;
@@ -47,6 +49,9 @@
 - (void)hide:(CDVInvokedUrlCommand*)command;
 - (void)back:(CDVInvokedUrlCommand*)command;
 - (void)loadAfterBeforeload:(CDVInvokedUrlCommand*)command;
+
+- (void)showStatusbar:(BOOL)show;
+- (int)statusbarHieght;
 
 @end
 
@@ -71,8 +76,12 @@
 @property (nonatomic, weak) CDVWKInAppBrowser* navigationDelegate;
 @property (nonatomic) NSURL* currentURL;
 
+@property (nonatomic) BOOL* statusbar;
+
 - (void)close;
 - (void)navigateTo:(NSURL*)url;
+- (void)showStatusbar:(BOOL)show;
+- (int)statusbarHieght;
 - (void)showLocationBar:(BOOL)show;
 - (void)showToolBar:(BOOL)show : (NSString *) toolbarPosition;
 - (void)setCloseButtonTitle:(NSString*)title : (NSString*) colorString : (int) buttonIndex;

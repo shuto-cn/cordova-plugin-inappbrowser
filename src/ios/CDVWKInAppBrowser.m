@@ -35,7 +35,6 @@
 #define    IAB_BRIDGE_NAME @"cordova_iab"
 
 #define    TOOLBAR_HEIGHT 44.0
-#define    STATUSBAR_HEIGHT 0
 #define    LOCATIONBAR_HEIGHT 21.0
 #define    FOOTER_HEIGHT ((TOOLBAR_HEIGHT) + (LOCATIONBAR_HEIGHT))
 
@@ -67,7 +66,18 @@ static CDVWKInAppBrowser* instance = nil;
 {
     [self close:nil];
 }
-
+- (void)showStatusbar:(BOOL)show
+{
+    self.statusbar = show;
+}
+- (int)statusbarHieght
+{
+    if(self.statusbar) {
+        return  [[UIApplication sharedApplication] statusBarFrame].size.height;
+    } else {
+        return 0;
+    }
+}
 - (void)close:(CDVInvokedUrlCommand*)command
 {
     if (self.inAppBrowserViewController == nil) {
@@ -207,6 +217,8 @@ static CDVWKInAppBrowser* instance = nil;
         }
     }
     
+    [self.inAppBrowserViewController showStatusbar:browserOptions.statusbar];
+    [self showStatusbar:browserOptions.statusbar];
     [self.inAppBrowserViewController showLocationBar:browserOptions.location];
     [self.inAppBrowserViewController showToolBar:browserOptions.toolbar :browserOptions.toolbarposition];
     if (browserOptions.closebuttoncaption != nil || browserOptions.closebuttoncolor != nil) {
@@ -315,7 +327,7 @@ static CDVWKInAppBrowser* instance = nil;
 //                [self->tmpWindow makeKeyAndVisible];
 //            }
             // [tmpController presentViewController:nav animated:!noAnimate completion:nil];
-            self.inAppBrowserViewController.view.frame = CGRectMake(0,STATUSBAR_HEIGHT,self.inAppBrowserViewController.view.frame.size.width,self.inAppBrowserViewController.view.frame.size.height-STATUSBAR_HEIGHT);
+            self.inAppBrowserViewController.view.frame = CGRectMake(0,self.statusbarHieght,self.inAppBrowserViewController.view.frame.size.width,self.inAppBrowserViewController.view.frame.size.height - 10);
             [self.viewController.view addSubview:self.inAppBrowserViewController.view];
         }
     });
@@ -938,7 +950,18 @@ BOOL isExiting = FALSE;
     [items replaceObjectAtIndex:buttonIndex withObject:self.closeButton];
     [self.toolbar setItems:items];
 }
-
+- (void)showStatusbar:(BOOL)show
+{
+    self.statusbar = show;
+}
+- (int)statusbarHieght
+{
+    if(self.statusbar) {
+        return  [[UIApplication sharedApplication] statusBarFrame].size.height;
+    } else {
+        return 0;
+    }
+}
 - (void)showLocationBar:(BOOL)show
 {
     CGRect locationbarFrame = self.addressLabel.frame;
@@ -1122,8 +1145,8 @@ BOOL isExiting = FALSE;
     if (IsAtLeastiOSVersion(@"7.0") && !viewRenderedAtLeastOnce) {
         viewRenderedAtLeastOnce = TRUE;
         CGRect viewBounds = [self.webView bounds];
-        viewBounds.origin.y = STATUSBAR_HEIGHT;
-        viewBounds.size.height = viewBounds.size.height - STATUSBAR_HEIGHT;
+        viewBounds.origin.y = self.statusbarHieght;
+        viewBounds.size.height = viewBounds.size.height - self.statusbarHieght;
         self.webView.frame = viewBounds;
         [[UIApplication sharedApplication] setStatusBarStyle:[self preferredStatusBarStyle]];
     }
