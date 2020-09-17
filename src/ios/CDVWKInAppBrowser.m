@@ -74,11 +74,7 @@ static CDVWKInAppBrowser* instance = nil;
         NSLog(@"IAB.close() called but it was already closed.");
         return;
     }
-    UIView *lastView;
-    for(UIView *subview in [self.viewController.view subviews]) {
-        lastView = subview;
-    }
-    [lastView removeFromSuperview];
+    
     // Things are cleaned up in browserExit.
     [self.inAppBrowserViewController close];
 }
@@ -203,7 +199,7 @@ static CDVWKInAppBrowser* instance = nil;
     }
 
     if (self.inAppBrowserViewController == nil) {
-        self.inAppBrowserViewController = [[CDVWKInAppBrowserViewController alloc] initWithBrowserOptions: browserOptions andSettings:self.commandDelegate.settings];
+        self.inAppBrowserViewController = [[CDVWKInAppBrowserViewController alloc] initWithBrowserOptions: browserOptions andSettings:self.commandDelegate.settings andParent: self.viewController];
         self.inAppBrowserViewController.navigationDelegate = self;
         
         if ([self.viewController conformsToProtocol:@protocol(CDVScreenOrientationDelegate)]) {
@@ -716,7 +712,7 @@ static CDVWKInAppBrowser* instance = nil;
 BOOL viewRenderedAtLeastOnce = FALSE;
 BOOL isExiting = FALSE;
 
-- (id)initWithBrowserOptions: (CDVInAppBrowserOptions*) browserOptions andSettings:(NSDictionary *)settings
+- (id)initWithBrowserOptions: (CDVInAppBrowserOptions*) browserOptions andSettings:(NSDictionary *)settings andParent:(UIViewController*) parent
 {
     self = [super init];
     if (self != nil) {
@@ -724,7 +720,7 @@ BOOL isExiting = FALSE;
         _settings = settings;
         self.webViewUIDelegate = [[CDVWKInAppBrowserUIDelegate alloc] initWithTitle:[[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleDisplayName"]];
         [self.webViewUIDelegate setViewController:self];
-        
+        self.parent = parent;
         [self createViews];
     }
     
@@ -1079,14 +1075,23 @@ BOOL isExiting = FALSE;
     return NO;
 }
 
+- (void)newClose{
+    
+}
 - (void)close
 {
     self.currentURL = nil;
     
     __weak UIViewController* weakSelf = self;
+    __weak UIViewController* weakParentSelf = self.parent;
     
     // Run later to avoid the "took a long time" log message.
     dispatch_async(dispatch_get_main_queue(), ^{
+        UIView *lastView;
+        for(UIView *subview in [weakParentSelf.view subviews]) {
+            lastView = subview;
+        }
+        [lastView removeFromSuperview];
         isExiting = TRUE;
         if ([weakSelf respondsToSelector:@selector(presentingViewController)]) {
             [[weakSelf presentingViewController] dismissViewControllerAnimated:YES completion:nil];
