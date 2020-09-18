@@ -22,6 +22,10 @@
 
 @property (nonatomic, assign) BOOL location;
 @property (nonatomic, assign) BOOL statusbar;
+@property (nonatomic, assign) BOOL titlebar;
+@property (nonatomic, copy) NSString*  color;
+@property (nonatomic, copy) NSString*  background;
+@property (nonatomic, assign) BOOL backbutton;
 @property (nonatomic, assign) BOOL toolbar;
 @property (nonatomic, copy) NSString* closebuttoncaption;
 @property (nonatomic, copy) NSString* closebuttoncolor;

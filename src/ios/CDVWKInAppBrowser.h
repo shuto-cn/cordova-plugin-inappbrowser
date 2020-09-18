@@ -70,6 +70,7 @@
 @property (nonatomic, strong) IBOutlet UIBarButtonItem* forwardButton;
 @property (nonatomic, strong) IBOutlet UIActivityIndicatorView* spinner;
 @property (nonatomic, strong) IBOutlet UIToolbar* toolbar;
+@property (nonatomic, strong) IBOutlet UINavigationBar*titlebar;
 @property (nonatomic, strong) IBOutlet CDVWKInAppBrowserUIDelegate* webViewUIDelegate;
 
 @property (nonatomic, weak) id <CDVScreenOrientationDelegate> orientationDelegate;

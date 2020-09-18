@@ -27,7 +27,9 @@
         // default values
         self.location = YES;
         self.toolbar = YES;
-        self.statusbar = YES;
+        self.titlebar = NO;
+        self.color = nil;
+        self.background = nil;
         self.closebuttoncaption = nil;
         self.toolbarposition = @"bottom";
         self.cleardata = NO;

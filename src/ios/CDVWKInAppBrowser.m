@@ -309,26 +309,10 @@ static CDVWKInAppBrowser* instance = nil;
     // Run later to avoid the "took a long time" log message.
     dispatch_async(dispatch_get_main_queue(), ^{
         if (weakSelf.inAppBrowserViewController != nil) {
-//            float osVersion = [[[UIDevice currentDevice] systemVersion] floatValue];
-//            __strong __typeof(weakSelf) strongSelf = weakSelf;
-//            if (!strongSelf->tmpWindow) {
-//                CGRect frame = [[UIScreen mainScreen] bounds];
-//                if(initHidden && osVersion < 11){
-//                   frame.origin.x = -10000;
-//                }
-//                strongSelf->tmpWindow = [[UIWindow alloc] initWithFrame:frame];
-//            }
-//            UIViewController *tmpController = [[UIViewController alloc] init];
-//
-//            [strongSelf->tmpWindow setRootViewController:tmpController];
-//            [strongSelf->tmpWindow setWindowLevel:UIWindowLevelNormal];
-//
-//            if(!initHidden || osVersion < 11){
-//                [self->tmpWindow makeKeyAndVisible];
-//            }
-            // [tmpController presentViewController:nav animated:!noAnimate completion:nil];
-            self.inAppBrowserViewController.view.frame = CGRectMake(0,self.statusbarHieght,self.inAppBrowserViewController.view.frame.size.width,self.inAppBrowserViewController.view.frame.size.height - 10);
+            /* 开始处理遮挡相机插件问题*/
+            self.inAppBrowserViewController.view.frame = CGRectMake(0,self.statusbarHieght,self.inAppBrowserViewController.view.frame.size.width,self.inAppBrowserViewController.view.frame.size.height - self.statusbarHieght/2);
             [self.viewController.view addSubview:self.inAppBrowserViewController.view];
+            /* 结束处理遮挡相机插件问题*/
         }
     });
 }
@@ -918,6 +902,53 @@ BOOL isExiting = FALSE;
     } else {
         [self.toolbar setItems:@[self.closeButton, flexibleSpaceButton, self.backButton, fixedSpaceButton, self.forwardButton]];
     }
+    // 开始添加标题栏
+    self.titlebar = [[UINavigationBar alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width, 44)];
+    UIColor *backgroundColor = nil;
+    if(_browserOptions.background == nil) {
+        backgroundColor = [UIColor whiteColor];
+    }else{
+        backgroundColor = [self colorFromHexString:_browserOptions.background];
+    }
+    UIColor *fontColor = nil;
+    if(_browserOptions.color == nil) {
+        fontColor = [UIColor blackColor];
+    }else{
+        fontColor = [self colorFromHexString:_browserOptions.color];
+    }
+    
+    self.titlebar.barTintColor = backgroundColor;
+    self.titlebar.tintColor =fontColor;
+    self.titlebar.translucent = YES;
+    UINavigationItem *navigationItem = [[UINavigationItem alloc] initWithTitle:nil];
+    NSDictionary *barButtonAppearanceDict = @{NSFontAttributeName : [UIFont fontWithName:@"Symbol" size:24], NSForegroundColorAttributeName: fontColor};
+    if(_browserOptions.backbutton) {
+        UIBarButtonItem *leftButton = [[UIBarButtonItem alloc] initWithTitle: @"❮"
+                                                                       style:UIBarButtonItemStylePlain
+                                                                      target:self
+                                                                      action:@selector(goBack:)];
+        leftButton.tintColor = fontColor;
+        [leftButton setTitleTextAttributes:barButtonAppearanceDict forState:UIControlStateNormal];
+        [navigationItem setLeftBarButtonItem:leftButton];
+    }
+    UIBarButtonItem *rightButton = [[UIBarButtonItem alloc] initWithTitle:@"⊗"
+                                                                  style:UIBarButtonItemStyleDone
+                                                                  target:self
+                                                                   action:@selector(close)];
+    [rightButton setTitleTextAttributes:barButtonAppearanceDict forState:UIControlStateNormal];
+    rightButton.tintColor = fontColor;
+    //设置导航栏内容
+    [navigationItem setTitle:self.webView.title];
+    //把导航栏集合添加入导航栏中，设置动画关闭
+    [self.titlebar pushNavigationItem:navigationItem animated:NO];
+    
+    //把左右两个按钮添加入导航栏集合中
+    [navigationItem setRightBarButtonItem:rightButton];
+    self.titlebar.hidden = !_browserOptions.titlebar;
+
+    [self.view addSubview:self.titlebar];
+    
+    // 结束添加标题栏
     
     self.view.backgroundColor = [UIColor grayColor];
     [self.view addSubview:self.toolbar];
@@ -1098,9 +1129,6 @@ BOOL isExiting = FALSE;
     return NO;
 }
 
-- (void)newClose{
-    
-}
 - (void)close
 {
     self.currentURL = nil;
@@ -1132,7 +1160,11 @@ BOOL isExiting = FALSE;
 
 - (void)goBack:(id)sender
 {
-    [self.webView goBack];
+    if(self.webView.canGoBack){
+        [self.webView goBack];
+    } else {
+        [self close];
+    }
 }
 
 - (void)goForward:(id)sender
@@ -1145,8 +1177,9 @@ BOOL isExiting = FALSE;
     if (IsAtLeastiOSVersion(@"7.0") && !viewRenderedAtLeastOnce) {
         viewRenderedAtLeastOnce = TRUE;
         CGRect viewBounds = [self.webView bounds];
-        viewBounds.origin.y = self.statusbarHieght;
-        viewBounds.size.height = viewBounds.size.height - self.statusbarHieght;
+        int offsetY = _browserOptions.titlebar? 44 : 0 ;
+        viewBounds.origin.y = offsetY ;
+        viewBounds.size.height = viewBounds.size.height - offsetY;
         self.webView.frame = viewBounds;
         [[UIApplication sharedApplication] setStatusBarStyle:[self preferredStatusBarStyle]];
     }
