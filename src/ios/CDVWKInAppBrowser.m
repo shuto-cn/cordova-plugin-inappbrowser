@@ -919,8 +919,9 @@ BOOL isExiting = FALSE;
     
     self.titlebar.barTintColor = backgroundColor;
     self.titlebar.tintColor =fontColor;
+    [self.titlebar setTitleTextAttributes: @{NSForegroundColorAttributeName: fontColor}];
     self.titlebar.translucent = YES;
-    UINavigationItem *navigationItem = [[UINavigationItem alloc] initWithTitle:nil];
+    self.titleItem= [[UINavigationItem alloc] initWithTitle:@"加载中..."];
     NSDictionary *barButtonAppearanceDict = @{NSFontAttributeName : [UIFont fontWithName:@"Symbol" size:24], NSForegroundColorAttributeName: fontColor};
     if(_browserOptions.backbutton) {
         UIBarButtonItem *leftButton = [[UIBarButtonItem alloc] initWithTitle: @"❮"
@@ -929,7 +930,7 @@ BOOL isExiting = FALSE;
                                                                       action:@selector(goBack:)];
         leftButton.tintColor = fontColor;
         [leftButton setTitleTextAttributes:barButtonAppearanceDict forState:UIControlStateNormal];
-        [navigationItem setLeftBarButtonItem:leftButton];
+        [self.titleItem setLeftBarButtonItem:leftButton];
     }
     UIBarButtonItem *rightButton = [[UIBarButtonItem alloc] initWithTitle:@"⊗"
                                                                   style:UIBarButtonItemStyleDone
@@ -938,12 +939,11 @@ BOOL isExiting = FALSE;
     [rightButton setTitleTextAttributes:barButtonAppearanceDict forState:UIControlStateNormal];
     rightButton.tintColor = fontColor;
     //设置导航栏内容
-    [navigationItem setTitle:self.webView.title];
     //把导航栏集合添加入导航栏中，设置动画关闭
-    [self.titlebar pushNavigationItem:navigationItem animated:NO];
+    [self.titlebar pushNavigationItem:self.titleItem animated:NO];
     
     //把左右两个按钮添加入导航栏集合中
-    [navigationItem setRightBarButtonItem:rightButton];
+    [self.titleItem setRightBarButtonItem:rightButton];
     self.titlebar.hidden = !_browserOptions.titlebar;
 
     [self.view addSubview:self.titlebar];
@@ -1224,6 +1224,7 @@ BOOL isExiting = FALSE;
     // loading url, start spinner, update back/forward
     
     self.addressLabel.text = NSLocalizedString(@"Loading...", nil);
+    self.titleItem.title = @"加载中...";
     self.backButton.enabled = theWebView.canGoBack;
     self.forwardButton.enabled = theWebView.canGoForward;
     
@@ -1252,12 +1253,12 @@ BOOL isExiting = FALSE;
 - (void)webView:(WKWebView *)theWebView didFinishNavigation:(WKNavigation *)navigation
 {
     // update url, stop spinner, update back/forward
-    
     self.addressLabel.text = [self.currentURL absoluteString];
     self.backButton.enabled = theWebView.canGoBack;
     self.forwardButton.enabled = theWebView.canGoForward;
     theWebView.scrollView.contentInset = UIEdgeInsetsZero;
-    
+    self.titleItem.title = theWebView.title;
+    self.titlebar.hidden = NO;
     [self.spinner stopAnimating];
     
     [self.navigationDelegate didFinishNavigation:theWebView];
@@ -1271,6 +1272,8 @@ BOOL isExiting = FALSE;
     self.forwardButton.enabled = theWebView.canGoForward;
     [self.spinner stopAnimating];
     
+    self.titleItem.title = @"加载出错";
+    self.titlebar.hidden = NO;
     self.addressLabel.text = NSLocalizedString(@"Load Error", nil);
     
     [self.navigationDelegate webView:theWebView didFailNavigation:error];
