@@ -37,6 +37,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
+import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -57,6 +58,7 @@ import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -118,8 +120,13 @@ public class InAppBrowser extends CordovaPlugin {
     private static final String FOOTER_COLOR = "footercolor";
     private static final String BEFORELOAD = "beforeload";
     private static final String FULLSCREEN = "fullscreen";
+    private static final String STATUSBAR = "statusbar";
+    private static final String TITLEBAR = "titlebar";
+    private static final String COLOR = "color";
+    private static final String BACKGROUND = "background";
+    private static final String BACKBUTTON = "backbutton";
 
-    private static final List customizableOptions = Arrays.asList(CLOSE_BUTTON_CAPTION, TOOLBAR_COLOR, NAVIGATION_COLOR, CLOSE_BUTTON_COLOR, FOOTER_COLOR);
+    private static final List customizableOptions = Arrays.asList(CLOSE_BUTTON_CAPTION, TOOLBAR_COLOR, NAVIGATION_COLOR, CLOSE_BUTTON_COLOR, FOOTER_COLOR,BACKGROUND,COLOR);
 
     private InAppBrowserDialog dialog;
     private WebView inAppWebView;
@@ -149,6 +156,13 @@ public class InAppBrowser extends CordovaPlugin {
     private String footerColor = "";
     private String beforeload = "";
     private boolean fullscreen = true;
+    // 是否显示状态栏
+    private boolean statusbar = true;
+    // 标题栏
+    private boolean titlebar = false;
+    private String color = "";
+    private String background = "";
+    private boolean backbutton = true;
     private String[] allowedSchemes;
     private InAppBrowserClient currentClient;
 
@@ -342,11 +356,7 @@ public class InAppBrowser extends CordovaPlugin {
                 @SuppressLint("NewApi")
                 @Override
                 public void run() {
-                    if(canGoBack()) {
-                        goBack();
-                    } else {
-                        closeDialog();
-                    }
+                    goBack();
                 }
             });
 
@@ -581,6 +591,8 @@ public class InAppBrowser extends CordovaPlugin {
     public void goBack() {
         if (this.inAppWebView.canGoBack()) {
             this.inAppWebView.goBack();
+        } else {
+            closeDialog();
         }
     }
 
@@ -733,6 +745,24 @@ public class InAppBrowser extends CordovaPlugin {
             if (fullscreenSet != null) {
                 fullscreen = fullscreenSet.equals("yes") ? true : false;
             }
+            String statusbarSet = features.get(STATUSBAR);
+            if (statusbarSet != null) {
+                statusbar = statusbarSet.equals("yes") ? true : false;
+            }
+            String titlebarSet = features.get(TITLEBAR);
+            if (titlebarSet != null) {
+                titlebar = titlebarSet.equals("yes");
+            }
+            String backbuttonSet = features.get(BACKBUTTON);
+            if (backbuttonSet != null) {
+                backbutton = backbuttonSet.equals("yes");
+            }
+            if (features.get(COLOR) != null) {
+                color = features.get(COLOR);
+            }
+            if (features.get(BACKGROUND) != null) {
+                background = features.get(BACKGROUND);
+            }
         }
 
         final CordovaWebView thatWebView = this.webView;
@@ -801,6 +831,7 @@ public class InAppBrowser extends CordovaPlugin {
                 return _close;
             }
 
+            TextView titleTitle = new TextView(cordova.getActivity());
             @SuppressLint("NewApi")
             public void run() {
 
@@ -812,9 +843,12 @@ public class InAppBrowser extends CordovaPlugin {
                 // Let's create the main dialog
                 dialog = new InAppBrowserDialog(cordova.getActivity(),fullscreen ? android.R.style.Theme_NoTitleBar : android.R.style.Theme_Black);
                 dialog.getWindow().getAttributes().windowAnimations = android.R.style.Animation_Dialog;
-                dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);               
+                dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
                 if (fullscreen) {
                     dialog.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+                }
+                else if (statusbar && !titlebar) {
+                    // do something
                 }
                 else {
                     // dialog.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -1004,6 +1038,11 @@ public class InAppBrowser extends CordovaPlugin {
                         cordova.startActivityForResult(InAppBrowser.this, Intent.createChooser(content, "Select File"), FILECHOOSER_REQUESTCODE);
                     }
 
+                    @Override
+                    public void onReceivedTitle(WebView view, String title) {
+                        super.onReceivedTitle(view, title);
+                        titleTitle.setText(title);
+                    }
                 });
                 currentClient = new InAppBrowserClient(thatWebView, edittext, beforeload);
                 inAppWebView.setWebViewClient(currentClient);
@@ -1084,6 +1123,97 @@ public class InAppBrowser extends CordovaPlugin {
                     // Add our toolbar to our main view/layout
                     main.addView(toolbar);
                 }
+
+                // titleBar 开始
+                RelativeLayout titleBar = new RelativeLayout(cordova.getActivity());
+                int statusBarHeight1 = 0;
+                if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                    //获取status_bar_height资源的ID
+                    int resourceId = cordova.getActivity().getResources().getIdentifier("status_bar_height", "dimen", "android");
+                    if (resourceId > 0) {
+                        //根据资源ID获取响应的尺寸值
+                        statusBarHeight1 = cordova.getActivity().getResources().getDimensionPixelSize(resourceId);
+                    }
+                }
+                int backgroundColor = Color.WHITE;
+                int fontColor = Color.BLACK;
+                if(!"".equals(background)){
+                    backgroundColor = Color.parseColor(background);
+                }
+                if(!"".equals(color)){
+                    fontColor = Color.parseColor(color);
+                }
+                titleBar.setBackgroundColor(backgroundColor);
+                titleBar.setLayoutParams(new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT, this.dpToPixels(44)+statusBarHeight1));
+                titleBar.setPadding(this.dpToPixels(2), this.dpToPixels(2)+statusBarHeight1, this.dpToPixels(2), this.dpToPixels(2));
+
+
+                RelativeLayout.LayoutParams titleTitleLayoutParams = new RelativeLayout.LayoutParams(
+                        titleBar.getWidth() - this.dpToPixels(128), LayoutParams.WRAP_CONTENT);
+                titleTitleLayoutParams.addRule(RelativeLayout.CENTER_IN_PARENT);
+                titleTitleLayoutParams.addRule(RelativeLayout.TEXT_ALIGNMENT_CENTER);
+                titleTitle.setPadding(this.dpToPixels(64),this.dpToPixels(20),this.dpToPixels(64),0);
+                titleTitle.setText("加载中...");
+                titleTitle.setText(inAppWebView.getTitle());
+                titleTitle.setEllipsize(TextUtils.TruncateAt.END);
+                titleTitle.setSingleLine(true);
+                titleTitle.setTextColor(fontColor);
+                titleTitle.setTextSize(18);
+                titleTitle.setBackgroundColor(backgroundColor);
+                titleTitle.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+                titleTitle.setGravity(Gravity.CENTER);
+                titleBar.addView(titleTitle,titleTitleLayoutParams);
+
+                Button titleBack = new Button(cordova.getActivity());
+                RelativeLayout.LayoutParams titleBackLayoutParams = new RelativeLayout.LayoutParams(
+                        this.dpToPixels(44), this.dpToPixels(32));
+                titleBackLayoutParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+                titleBack.setPadding(this.dpToPixels(10), 0,
+                        this.dpToPixels(10),0);
+                titleBack.setText("❮");
+                titleBack.setTextSize(20);
+                titleBack.setTextColor(fontColor);
+                titleBack.setGravity(Gravity.CENTER);
+                titleBack.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+                titleBack.setBackgroundColor(backgroundColor);
+
+                titleBack.setLayoutParams(titleBackLayoutParams);
+                titleBack.setOnClickListener(new View.OnClickListener() {
+                    public void onClick(View v) {
+                        goBack();
+                    }
+                });
+                if(backbutton) {
+                    titleBar.addView(titleBack, backLayoutParams);
+                }
+
+                Button titleClose = new Button(cordova.getActivity());
+                RelativeLayout.LayoutParams titleCloseLayoutParams = new RelativeLayout.LayoutParams(
+                        this.dpToPixels(44), this.dpToPixels(32));
+                titleCloseLayoutParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+                titleClose.setPadding(this.dpToPixels(10), this.dpToPixels(5),
+                        this.dpToPixels(10),0);
+                titleClose.setText("⊗");
+                titleClose.setTextSize(23);
+                titleClose.setTextColor(fontColor);
+                titleClose.setBackgroundColor(backgroundColor);
+                titleClose.setGravity(Gravity.CENTER);
+                titleClose.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+                titleClose.setLayoutParams(titleBackLayoutParams);
+                titleClose.setOnClickListener(new View.OnClickListener() {
+                    public void onClick(View v) {
+                        closeDialog();
+                    }
+                });
+                titleBar.addView(titleClose,titleCloseLayoutParams);
+
+                // Don't add the title bar if its been disabled
+                if (titlebar) {
+                    // Add our title bar to our main view/layout
+                    main.addView(titleBar);
+                }
+                // titleBar 结束
+
 
                 // Add our webview to our main view/layout
                 RelativeLayout webViewLayout = new RelativeLayout(cordova.getActivity());
@@ -1393,7 +1523,7 @@ public class InAppBrowser extends CordovaPlugin {
          * New (added in API 21)
          * For Android 5.0 and above.
          *
-         * @param webView
+         * @param view
          * @param request
          */
         @TargetApi(Build.VERSION_CODES.LOLLIPOP)

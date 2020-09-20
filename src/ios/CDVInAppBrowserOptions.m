@@ -28,6 +28,7 @@
         self.location = YES;
         self.toolbar = YES;
         self.titlebar = NO;
+        self.backbutton= YES;
         self.color = nil;
         self.background = nil;
         self.closebuttoncaption = nil;
