@@ -36,6 +36,7 @@
 
 @property (nonatomic, retain) CDVWKInAppBrowser* instance;
 @property (nonatomic, retain) CDVWKInAppBrowserViewController* inAppBrowserViewController;
+@property (nonatomic, strong) IBOutlet CDVInAppBrowserOptions* browserOptions;
 @property (nonatomic, copy) NSString* callbackId;
 @property (nonatomic, copy) NSRegularExpression *callbackIdPattern;
 
@@ -70,8 +71,10 @@
 @property (nonatomic, strong) IBOutlet UIBarButtonItem* forwardButton;
 @property (nonatomic, strong) IBOutlet UIActivityIndicatorView* spinner;
 @property (nonatomic, strong) IBOutlet UIToolbar* toolbar;
-@property (nonatomic, strong) IBOutlet UINavigationBar*titlebar;
-@property (nonatomic, strong) IBOutlet UINavigationItem*titleItem;
+@property (nonatomic, strong) IBOutlet UIView*titlebar;
+@property (nonatomic, strong) IBOutlet UIButton*titleBackButton;
+@property (nonatomic, strong) IBOutlet UIButton*titleCloseButton;
+@property (nonatomic, strong) IBOutlet UILabel*titleTitle;
 @property (nonatomic, strong) IBOutlet CDVWKInAppBrowserUIDelegate* webViewUIDelegate;
 
 @property (nonatomic, weak) id <CDVScreenOrientationDelegate> orientationDelegate;

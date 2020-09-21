@@ -136,6 +136,7 @@ static CDVWKInAppBrowser* instance = nil;
 - (void)openInInAppBrowser:(NSURL*)url withOptions:(NSString*)options
 {
     CDVInAppBrowserOptions* browserOptions = [CDVInAppBrowserOptions parseOptions:options];
+    self.browserOptions = browserOptions;
     
     WKWebsiteDataStore* dataStore = [WKWebsiteDataStore defaultDataStore];
     if (browserOptions.cleardata) {
@@ -310,7 +311,8 @@ static CDVWKInAppBrowser* instance = nil;
     dispatch_async(dispatch_get_main_queue(), ^{
         if (weakSelf.inAppBrowserViewController != nil) {
             /* 开始处理遮挡相机插件问题*/
-            self.inAppBrowserViewController.view.frame = CGRectMake(0,self.statusbarHieght,self.inAppBrowserViewController.view.frame.size.width,self.inAppBrowserViewController.view.frame.size.height - self.statusbarHieght/2);
+            self.inAppBrowserViewController.view.frame = CGRectMake(0,(self.browserOptions.statusbar || self.browserOptions.titlebar) ? self.inAppBrowserViewController.view.safeAreaInsets.top : 0,
+                                                                    self.inAppBrowserViewController.view.frame.size.width,self.inAppBrowserViewController.view.frame.size.height);
             [self.viewController.view addSubview:self.inAppBrowserViewController.view];
             /* 结束处理遮挡相机插件问题*/
         }
@@ -719,7 +721,7 @@ BOOL isExiting = FALSE;
         self.parent = parent;
         [self createViews];
     }
-    
+    //[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(change:) name:UIApplicationDidChangeStatusBarOrientationNotification object:nil];
     return self;
 }
 
@@ -903,7 +905,7 @@ BOOL isExiting = FALSE;
         [self.toolbar setItems:@[self.closeButton, flexibleSpaceButton, self.backButton, fixedSpaceButton, self.forwardButton]];
     }
     // 开始添加标题栏
-    self.titlebar = [[UINavigationBar alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width, 44)];
+    self.titlebar = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.view.frame.size.width, 120)]; //self.navigationController.navigationBar;
     UIColor *backgroundColor = nil;
     if(_browserOptions.background == nil) {
         backgroundColor = [UIColor whiteColor];
@@ -917,37 +919,31 @@ BOOL isExiting = FALSE;
         fontColor = [self colorFromHexString:_browserOptions.color];
     }
     
-    self.titlebar.barTintColor = backgroundColor;
+    self.titlebar.backgroundColor = backgroundColor;
     self.titlebar.tintColor =fontColor;
-    [self.titlebar setTitleTextAttributes: @{NSForegroundColorAttributeName: fontColor}];
-    self.titlebar.translucent = YES;
-    self.titleItem= [[UINavigationItem alloc] initWithTitle:@"加载中..."];
-    NSDictionary *barButtonAppearanceDict = @{NSFontAttributeName : [UIFont fontWithName:@"Symbol" size:24], NSForegroundColorAttributeName: fontColor};
-    if(_browserOptions.backbutton) {
-        UIBarButtonItem *leftButton = [[UIBarButtonItem alloc] initWithTitle: @"❮"
-                                                                       style:UIBarButtonItemStylePlain
-                                                                      target:self
-                                                                      action:@selector(goBack:)];
-        leftButton.tintColor = fontColor;
-        [leftButton setTitleTextAttributes:barButtonAppearanceDict forState:UIControlStateNormal];
-        [self.titleItem setLeftBarButtonItem:leftButton];
+    
+    // 返回按钮
+    self.titleBackButton =[[UIButton alloc] initWithFrame:CGRectMake(self.view.safeAreaInsets.left, 0, 44, 44)];
+    [self.titleBackButton setTitle:@"❮" forState:UIControlStateNormal];
+    [self.titleBackButton addTarget:self action:@selector(goBack:) forControlEvents:UIControlEventTouchUpInside];
+    if(_browserOptions.backbutton){
+        [self.titlebar addSubview:self.titleBackButton];
     }
-    UIBarButtonItem *rightButton = [[UIBarButtonItem alloc] initWithTitle:@"⊗"
-                                                                  style:UIBarButtonItemStyleDone
-                                                                  target:self
-                                                                   action:@selector(close)];
-    [rightButton setTitleTextAttributes:barButtonAppearanceDict forState:UIControlStateNormal];
-    rightButton.tintColor = fontColor;
-    //设置导航栏内容
-    //把导航栏集合添加入导航栏中，设置动画关闭
-    [self.titlebar pushNavigationItem:self.titleItem animated:NO];
-    
-    //把左右两个按钮添加入导航栏集合中
-    [self.titleItem setRightBarButtonItem:rightButton];
-    self.titlebar.hidden = !_browserOptions.titlebar;
+    self.titleCloseButton =[[UIButton alloc] initWithFrame:CGRectMake(self.view.frame.size.width - 44 - self.view.safeAreaInsets.right, 0, 44, 44)];
+    [self.titleCloseButton setTitle:@"⊗" forState:UIControlStateNormal];
+    [self.titleCloseButton addTarget:self action:@selector(close) forControlEvents:UIControlEventTouchUpInside];
+    [self.titlebar addSubview:self.titleCloseButton];
+    self.titleTitle = [[UILabel alloc] initWithFrame:CGRectMake(self.titleBackButton.frame.origin.x + self.titleBackButton.frame.size.width, 0,
+                                                                self.view.frame.size.width - 44 - self.view.safeAreaInsets.right - self.titleBackButton.frame.size.width - self.titleBackButton.frame.origin.x, 44)];
+    [self.titleTitle setText:@"加载中..."];
+    self.titleTitle.textAlignment = NSTextAlignmentCenter;
+    self.titleTitle.numberOfLines = 1;
+    [self.titleTitle setTextColor:fontColor];
+    [self.titlebar addSubview:self.titleTitle];
 
-    [self.view addSubview:self.titlebar];
-    
+    if(_browserOptions.titlebar){
+        [self.view addSubview:self.titlebar];
+    }
     // 结束添加标题栏
     
     self.view.backgroundColor = [UIColor grayColor];
@@ -993,6 +989,7 @@ BOOL isExiting = FALSE;
         return 0;
     }
 }
+
 - (void)showLocationBar:(BOOL)show
 {
     CGRect locationbarFrame = self.addressLabel.frame;
@@ -1104,7 +1101,11 @@ BOOL isExiting = FALSE;
         }
     }
 }
-
+-(void) viewDidLayoutSubviews{
+    [super viewDidLayoutSubviews];
+    NSLog(@"viewDidLayoutSubviews");
+    self.rePositionViews;
+}
 - (void)viewDidLoad
 {
     viewRenderedAtLeastOnce = FALSE;
@@ -1174,17 +1175,16 @@ BOOL isExiting = FALSE;
 
 - (void)viewWillAppear:(BOOL)animated
 {
-    if (IsAtLeastiOSVersion(@"7.0") && !viewRenderedAtLeastOnce) {
-        viewRenderedAtLeastOnce = TRUE;
-        CGRect viewBounds = [self.webView bounds];
-        int offsetY = _browserOptions.titlebar? 44 : 0 ;
-        viewBounds.origin.y = offsetY ;
-        viewBounds.size.height = viewBounds.size.height - offsetY;
-        self.webView.frame = viewBounds;
-        [[UIApplication sharedApplication] setStatusBarStyle:[self preferredStatusBarStyle]];
-    }
-    [self rePositionViews];
-    
+//    if (IsAtLeastiOSVersion(@"7.0") && !viewRenderedAtLeastOnce) {
+//        viewRenderedAtLeastOnce = TRUE;
+//        CGRect viewBounds = [self.webView bounds];
+//        int offsetY = _browserOptions.titlebar? 44 : 0 ;
+//        viewBounds.origin.y = offsetY ;
+//        viewBounds.size.height = viewBounds.size.height - offsetY;
+//        self.webView.frame = viewBounds;
+//        [[UIApplication sharedApplication] setStatusBarStyle:[self preferredStatusBarStyle]];
+//    }
+//    [self rePositionViews];
     [super viewWillAppear:animated];
 }
 
@@ -1200,8 +1200,27 @@ BOOL isExiting = FALSE;
 }
 
 - (void) rePositionViews {
-    if ([_browserOptions.toolbarposition isEqualToString:kInAppBrowserToolbarBarPositionTop]) {
-        [self.webView setFrame:CGRectMake(self.webView.frame.origin.x, TOOLBAR_HEIGHT, self.webView.frame.size.width, self.webView.frame.size.height)];
+    // CGRect frame = self.view.frame;
+    // NSLog(@"self.view - frame - %@", NSStringFromCGRect(frame));
+    
+    // CGRect layoutFrame = self.view.safeAreaLayoutGuide.layoutFrame;
+    // NSLog(@"self.view - layoutFrame - %@", NSStringFromCGRect(layoutFrame));
+    
+    // UIEdgeInsets insets = self.view.safeAreaInsets;
+    // NSLog(@"self.view - insets - %@", NSStringFromUIEdgeInsets(insets));
+    
+    // NSLog(@"mainScreen - %@ - %d", NSStringFromCGRect([UIScreen mainScreen].bounds),self.view.safeAreaInsets.top);
+    
+    self.view.frame = CGRectMake(0,(_browserOptions.titlebar || _browserOptions.statusbar) ? self.view.safeAreaInsets.top: 0,self.view.frame.size.width,self.view.frame.size.height);
+    if(_browserOptions.titlebar){
+        [self.titlebar setFrame:CGRectMake(self.toolbar.frame.origin.x, 0, self.view.frame.size.width, 44)];
+        [self.titleBackButton setFrame:CGRectMake(self.view.safeAreaInsets.left, 0, 44, 44)];
+        [self.titleCloseButton setFrame:CGRectMake(self.view.frame.size.width - 44 - self.view.safeAreaInsets.right, 0, 44, 44)];
+        [self.titleTitle setFrame:CGRectMake(self.titleBackButton.frame.origin.x + self.titleBackButton.frame.size.width, 0,
+                                             self.view.frame.size.width - 44 - self.view.safeAreaInsets.right - self.titleBackButton.frame.size.width - self.titleBackButton.frame.origin.x, 44)];
+        [self.webView setFrame:CGRectMake(self.webView.frame.origin.x, 44 , self.webView.frame.size.width, self.webView.frame.size.height)];
+    }else if ([_browserOptions.toolbarposition isEqualToString:kInAppBrowserToolbarBarPositionTop]) {
+        [self.webView setFrame:CGRectMake(self.webView.frame.origin.x, TOOLBAR_HEIGHT , self.webView.frame.size.width, self.webView.frame.size.height)];
         [self.toolbar setFrame:CGRectMake(self.toolbar.frame.origin.x, [self getStatusBarOffset], self.toolbar.frame.size.width, self.toolbar.frame.size.height)];
     }
 }
@@ -1224,7 +1243,7 @@ BOOL isExiting = FALSE;
     // loading url, start spinner, update back/forward
     
     self.addressLabel.text = NSLocalizedString(@"Loading...", nil);
-    self.titleItem.title = @"加载中...";
+    [self.titleTitle setText:@"加载中..."];
     self.backButton.enabled = theWebView.canGoBack;
     self.forwardButton.enabled = theWebView.canGoForward;
     
@@ -1257,7 +1276,7 @@ BOOL isExiting = FALSE;
     self.backButton.enabled = theWebView.canGoBack;
     self.forwardButton.enabled = theWebView.canGoForward;
     theWebView.scrollView.contentInset = UIEdgeInsetsZero;
-    self.titleItem.title = theWebView.title;
+    [self.titleTitle setText:theWebView.title];
     self.titlebar.hidden = NO;
     [self.spinner stopAnimating];
     
@@ -1271,8 +1290,7 @@ BOOL isExiting = FALSE;
     self.backButton.enabled = theWebView.canGoBack;
     self.forwardButton.enabled = theWebView.canGoForward;
     [self.spinner stopAnimating];
-    
-    self.titleItem.title = @"加载出错";
+    [self.titleTitle setText: @"加载出错"];
     self.titlebar.hidden = NO;
     self.addressLabel.text = NSLocalizedString(@"Load Error", nil);
     
