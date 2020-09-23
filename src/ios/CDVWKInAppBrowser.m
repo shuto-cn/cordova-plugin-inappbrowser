@@ -311,7 +311,7 @@ static CDVWKInAppBrowser* instance = nil;
     dispatch_async(dispatch_get_main_queue(), ^{
         if (weakSelf.inAppBrowserViewController != nil) {
             /* 开始处理遮挡相机插件问题*/
-            self.inAppBrowserViewController.view.frame = CGRectMake(0,(self.browserOptions.statusbar || self.browserOptions.titlebar) ? self.inAppBrowserViewController.view.safeAreaInsets.top : 0,
+            self.inAppBrowserViewController.view.frame = CGRectMake(0,(self.browserOptions.statusbar || self.browserOptions.titlebar) ? self.inAppBrowserViewController.view.safeAreaLayoutGuide.layoutFrame.origin.y : 0,
                                                                     self.inAppBrowserViewController.view.frame.size.width,self.inAppBrowserViewController.view.frame.size.height);
             [self.viewController.view addSubview:self.inAppBrowserViewController.view];
             /* 结束处理遮挡相机插件问题*/
@@ -1200,18 +1200,21 @@ BOOL isExiting = FALSE;
 }
 
 - (void) rePositionViews {
-    // CGRect frame = self.view.frame;
-    // NSLog(@"self.view - frame - %@", NSStringFromCGRect(frame));
-    
-    // CGRect layoutFrame = self.view.safeAreaLayoutGuide.layoutFrame;
-    // NSLog(@"self.view - layoutFrame - %@", NSStringFromCGRect(layoutFrame));
-    
-    // UIEdgeInsets insets = self.view.safeAreaInsets;
-    // NSLog(@"self.view - insets - %@", NSStringFromUIEdgeInsets(insets));
-    
-    // NSLog(@"mainScreen - %@ - %d", NSStringFromCGRect([UIScreen mainScreen].bounds),self.view.safeAreaInsets.top);
-    
-    self.view.frame = CGRectMake(0,(_browserOptions.titlebar || _browserOptions.statusbar) ? self.view.safeAreaInsets.top: 0,self.view.frame.size.width,self.view.frame.size.height);
+//     CGRect frame = self.view.frame;
+//     NSLog(@"self.view - frame - %@", NSStringFromCGRect(frame));
+//
+//     CGRect layoutFrame = self.view.safeAreaLayoutGuide.layoutFrame;
+//     NSLog(@"self.view - layoutFrame - %@", NSStringFromCGRect(layoutFrame));
+//
+//     UIEdgeInsets insets = self.view.safeAreaInsets;
+//     NSLog(@"self.view - insets - %@", NSStringFromUIEdgeInsets(insets));
+//
+//    // NSLog(@"mainScreen - %@ - %d", NSStringFromCGRect([UIScreen mainScreen].bounds),self.view.safeAreaInsets.top);
+//
+ //  NSLog(@"_browserOptions::%d||%d||%d",_browserOptions.statusbar,_browserOptions.titlebar,[[UIApplication sharedApplication] statusBarFrame].size.height + [[UIApplication sharedApplication] statusBarFrame].origin.y);
+    self.view.frame = CGRectMake(0,(_browserOptions.titlebar || _browserOptions.statusbar)
+                                 ? [[UIApplication sharedApplication] statusBarFrame].size.height + [[UIApplication sharedApplication] statusBarFrame].origin.y
+                                 : 0,self.view.frame.size.width,self.view.frame.size.height);
     if(_browserOptions.titlebar){
         [self.titlebar setFrame:CGRectMake(self.toolbar.frame.origin.x, 0, self.view.frame.size.width, 44)];
         [self.titleBackButton setFrame:CGRectMake(self.view.safeAreaInsets.left, 0, 44, 44)];
