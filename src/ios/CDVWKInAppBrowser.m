@@ -84,7 +84,6 @@ static CDVWKInAppBrowser* instance = nil;
         NSLog(@"IAB.close() called but it was already closed.");
         return;
     }
-
     // Things are cleaned up in browserExit.
     [self.inAppBrowserViewController close];
 }
@@ -268,7 +267,6 @@ static CDVWKInAppBrowser* instance = nil;
         _beforeload = @"yes";
     }
     _waitForBeforeload = ![_beforeload isEqualToString:@""];
-    
     [self.inAppBrowserViewController navigateTo:url];
     if (!browserOptions.hidden) {
         [self show:nil withNoAnimate:browserOptions.hidden];
@@ -1169,7 +1167,7 @@ BOOL isExiting = FALSE;
     [self.webView goForward];
 }
 
-- (void)viewWillAppear:(BOOL)animated
+-  (void)viewWillAppear:(BOOL)animated
 {
 //    if (IsAtLeastiOSVersion(@"7.0") && !viewRenderedAtLeastOnce) {
 //        viewRenderedAtLeastOnce = TRUE;
@@ -1210,7 +1208,10 @@ BOOL isExiting = FALSE;
  //  NSLog(@"_browserOptions::%d||%d||%d",_browserOptions.statusbar,_browserOptions.titlebar,[[UIApplication sharedApplication] statusBarFrame].size.height + [[UIApplication sharedApplication] statusBarFrame].origin.y);
     self.view.frame = CGRectMake(0,(_browserOptions.titlebar || _browserOptions.statusbar)
                                  ? [[UIApplication sharedApplication] statusBarFrame].size.height + [[UIApplication sharedApplication] statusBarFrame].origin.y
-                                 : 0,self.view.frame.size.width,self.view.frame.size.height);
+                                 : 0,self.view.frame.size.width,[UIScreen mainScreen].bounds.size.height
+                                 -(_browserOptions.titlebar ? 44 : 0)
+                                 -((_browserOptions.titlebar || _browserOptions.statusbar)
+                                   ? [[UIApplication sharedApplication] statusBarFrame].size.height + [[UIApplication sharedApplication] statusBarFrame].origin.y: 0));
     if(_browserOptions.titlebar){
         [self.titlebar setFrame:CGRectMake(self.toolbar.frame.origin.x, 0, self.view.frame.size.width, 44)];
         [self.titleBackButton setFrame:CGRectMake(self.view.safeAreaInsets.left, 0, 44, 44)];
