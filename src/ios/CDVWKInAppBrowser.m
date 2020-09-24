@@ -84,7 +84,7 @@ static CDVWKInAppBrowser* instance = nil;
         NSLog(@"IAB.close() called but it was already closed.");
         return;
     }
-    
+
     // Things are cleaned up in browserExit.
     [self.inAppBrowserViewController close];
 }
@@ -709,7 +709,12 @@ static CDVWKInAppBrowser* instance = nil;
 
 BOOL viewRenderedAtLeastOnce = FALSE;
 BOOL isExiting = FALSE;
-
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
+    if ([keyPath isEqualToString:@"title"] && object == self.webView)
+    {
+        self.titleTitle.text = self.webView.title;
+    }
+}
 - (id)initWithBrowserOptions: (CDVInAppBrowserOptions*) browserOptions andSettings:(NSDictionary *)settings andParent:(UIViewController*) parent
 {
     self = [super init];
@@ -720,8 +725,8 @@ BOOL isExiting = FALSE;
         [self.webViewUIDelegate setViewController:self];
         self.parent = parent;
         [self createViews];
+        [self.webView addObserver:self forKeyPath:@"title" options:NSKeyValueObservingOptionNew context:NULL];
     }
-    //[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(change:) name:UIApplicationDidChangeStatusBarOrientationNotification object:nil];
     return self;
 }
 
@@ -792,7 +797,7 @@ BOOL isExiting = FALSE;
     [self.webView setAutoresizingMask:UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth];
     self.webView.allowsLinkPreview = NO;
     self.webView.allowsBackForwardNavigationGestures = NO;
-    
+
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 110000
    if (@available(iOS 11.0, *)) {
        [self.webView.scrollView setContentInsetAdjustmentBehavior:UIScrollViewContentInsetAdjustmentNever];
@@ -981,15 +986,6 @@ BOOL isExiting = FALSE;
 {
     self.statusbar = show;
 }
-- (int)statusbarHieght
-{
-    if(self.statusbar) {
-        return  [[UIApplication sharedApplication] statusBarFrame].size.height;
-    } else {
-        return 0;
-    }
-}
-
 - (void)showLocationBar:(BOOL)show
 {
     CGRect locationbarFrame = self.addressLabel.frame;
@@ -1133,7 +1129,7 @@ BOOL isExiting = FALSE;
 - (void)close
 {
     self.currentURL = nil;
-    
+    [self.webView removeObserver:self forKeyPath:@"title"];
     __weak UIViewController* weakSelf = self;
     __weak UIViewController* weakParentSelf = self.parent;
     

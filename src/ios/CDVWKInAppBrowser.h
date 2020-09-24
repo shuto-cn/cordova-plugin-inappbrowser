@@ -50,7 +50,6 @@
 - (void)hide:(CDVInvokedUrlCommand*)command;
 - (void)back:(CDVInvokedUrlCommand*)command;
 - (void)loadAfterBeforeload:(CDVInvokedUrlCommand*)command;
-
 - (void)showStatusbar:(BOOL)show;
 - (int)statusbarHieght;
 
@@ -90,6 +89,7 @@
 - (void)showLocationBar:(BOOL)show;
 - (void)showToolBar:(BOOL)show : (NSString *) toolbarPosition;
 - (void)setCloseButtonTitle:(NSString*)title : (NSString*) colorString : (int) buttonIndex;
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context;
 
 - (id)initWithBrowserOptions: (CDVInAppBrowserOptions*) browserOptions andSettings:(NSDictionary*) settings andParent:(UIViewController*) parent;
 
