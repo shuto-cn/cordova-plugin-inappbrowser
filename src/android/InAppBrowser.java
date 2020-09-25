@@ -1164,7 +1164,7 @@ public class InAppBrowser extends CordovaPlugin {
                 titleTitle.setGravity(Gravity.CENTER);
                 titleBar.addView(titleTitle,titleTitleLayoutParams);
 
-                Button titleBack = new Button(cordova.getActivity());
+                TextView titleBack = new TextView(cordova.getActivity());
                 RelativeLayout.LayoutParams titleBackLayoutParams = new RelativeLayout.LayoutParams(
                         this.dpToPixels(44), this.dpToPixels(32));
                 titleBackLayoutParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
@@ -1187,7 +1187,7 @@ public class InAppBrowser extends CordovaPlugin {
                     titleBar.addView(titleBack, backLayoutParams);
                 }
 
-                Button titleClose = new Button(cordova.getActivity());
+                TextView titleClose = new TextView(cordova.getActivity());
                 RelativeLayout.LayoutParams titleCloseLayoutParams = new RelativeLayout.LayoutParams(
                         this.dpToPixels(44), this.dpToPixels(32));
                 titleCloseLayoutParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
