@@ -125,6 +125,7 @@ public class InAppBrowser extends CordovaPlugin {
     private static final String COLOR = "color";
     private static final String BACKGROUND = "background";
     private static final String BACKBUTTON = "backbutton";
+    private static final String CANHARDWAREBACK = "canhardwareback";
 
     private static final List customizableOptions = Arrays.asList(CLOSE_BUTTON_CAPTION, TOOLBAR_COLOR, NAVIGATION_COLOR, CLOSE_BUTTON_COLOR, FOOTER_COLOR,BACKGROUND,COLOR);
 
@@ -160,6 +161,8 @@ public class InAppBrowser extends CordovaPlugin {
     private boolean statusbar = true;
     // 标题栏
     private boolean titlebar = false;
+    // 物理返回键是否生效
+    private boolean canhardwareback = true;
     private String color = "";
     private String background = "";
     private boolean backbutton = true;
@@ -757,6 +760,10 @@ public class InAppBrowser extends CordovaPlugin {
             if (backbuttonSet != null) {
                 backbutton = backbuttonSet.equals("yes");
             }
+            String canhardwarebackSet = features.get(CANHARDWAREBACK);
+            if (canhardwarebackSet != null) {
+                canhardwareback = canhardwarebackSet.equals("yes");
+            }
             if (features.get(COLOR) != null) {
                 color = features.get(COLOR);
             }
@@ -841,7 +848,7 @@ public class InAppBrowser extends CordovaPlugin {
                 };
 
                 // Let's create the main dialog
-                dialog = new InAppBrowserDialog(cordova.getActivity(),fullscreen ? android.R.style.Theme_NoTitleBar : android.R.style.Theme_Black);
+                dialog = new InAppBrowserDialog(cordova.getActivity(),fullscreen ? android.R.style.Theme_NoTitleBar : android.R.style.Theme_Black, canhardwareback);
                 dialog.getWindow().getAttributes().windowAnimations = android.R.style.Animation_Dialog;
                 dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
                 if (fullscreen) {
