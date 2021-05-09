@@ -31,10 +31,12 @@ import org.json.JSONObject;
 public class InAppBrowserDialog extends Dialog {
     Context context;
     InAppBrowser inAppBrowser = null;
+    boolean canHardwareBack = true;
 
-    public InAppBrowserDialog(Context context, int theme) {
+    public InAppBrowserDialog(Context context, int theme, boolean canHardwareBack) {
         super(context, theme);
         this.context = context;
+        this.canHardwareBack = canHardwareBack;
     }
 
     public void setInAppBroswer(InAppBrowser browser) {
@@ -42,16 +44,19 @@ public class InAppBrowserDialog extends Dialog {
     }
 
     public void onBackPressed () {
-        if (this.inAppBrowser == null) {
-            this.dismiss();
-        } else {
-            // better to go through the in inAppBrowser
-            // because it does a clean up
-            if (this.inAppBrowser.hardwareBack() && this.inAppBrowser.canGoBack()) {
-                this.inAppBrowser.goBack();
-            }  else {
-                this.inAppBrowser.closeDialog();
+        if (canHardwareBack){
+            if (this.inAppBrowser == null) {
+                this.dismiss();
+            } else {
+                // better to go through the in inAppBrowser
+                // because it does a clean up
+                if (this.inAppBrowser.hardwareBack() && this.inAppBrowser.canGoBack()) {
+                    this.inAppBrowser.goBack();
+                }  else {
+                    this.inAppBrowser.closeDialog();
+                }
             }
         }
+
     }
 }
