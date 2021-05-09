@@ -38,6 +38,8 @@
 #define    LOCATIONBAR_HEIGHT 21.0
 #define    FOOTER_HEIGHT ((TOOLBAR_HEIGHT) + (LOCATIONBAR_HEIGHT))
 
+#define    TITLEBAR_HEIGHT 44.0
+
 #pragma mark CDVWKInAppBrowser
 
 @interface CDVWKInAppBrowser () {
@@ -70,14 +72,7 @@ static CDVWKInAppBrowser* instance = nil;
 {
     self.statusbar = show;
 }
-- (int)statusbarHieght
-{
-    if(self.statusbar) {
-        return  [[UIApplication sharedApplication] statusBarFrame].size.height;
-    } else {
-        return 0;
-    }
-}
+
 - (void)close:(CDVInvokedUrlCommand*)command
 {
     if (self.inAppBrowserViewController == nil) {
@@ -135,6 +130,7 @@ static CDVWKInAppBrowser* instance = nil;
 - (void)openInInAppBrowser:(NSURL*)url withOptions:(NSString*)options
 {
     CDVInAppBrowserOptions* browserOptions = [CDVInAppBrowserOptions parseOptions:options];
+    browserOptions.statusbar = browserOptions.titlebar ? NO : browserOptions.statusbar;
     self.browserOptions = browserOptions;
     
     WKWebsiteDataStore* dataStore = [WKWebsiteDataStore defaultDataStore];
@@ -221,6 +217,7 @@ static CDVWKInAppBrowser* instance = nil;
     [self showStatusbar:browserOptions.statusbar];
     [self.inAppBrowserViewController showLocationBar:browserOptions.location];
     [self.inAppBrowserViewController showToolBar:browserOptions.toolbar :browserOptions.toolbarposition];
+    [self.inAppBrowserViewController showTitleBar:browserOptions.titlebar];
     if (browserOptions.closebuttoncaption != nil || browserOptions.closebuttoncolor != nil) {
         int closeButtonIndex = browserOptions.lefttoright ? (browserOptions.hidenavigationbuttons ? 1 : 4) : 0;
         [self.inAppBrowserViewController setCloseButtonTitle:browserOptions.closebuttoncaption :browserOptions.closebuttoncolor :closeButtonIndex];
@@ -309,7 +306,7 @@ static CDVWKInAppBrowser* instance = nil;
     dispatch_async(dispatch_get_main_queue(), ^{
         if (weakSelf.inAppBrowserViewController != nil) {
             /* 开始处理遮挡相机插件问题*/
-            self.inAppBrowserViewController.view.frame = CGRectMake(0,(self.browserOptions.statusbar || self.browserOptions.titlebar) ? self.inAppBrowserViewController.view.safeAreaLayoutGuide.layoutFrame.origin.y : 0,
+            self.inAppBrowserViewController.view.frame = CGRectMake(0, 0,
                                                                     self.inAppBrowserViewController.view.frame.size.width,self.inAppBrowserViewController.view.frame.size.height);
             [self.viewController.view addSubview:self.inAppBrowserViewController.view];
             /* 结束处理遮挡相机插件问题*/
@@ -908,7 +905,8 @@ BOOL isExiting = FALSE;
         [self.toolbar setItems:@[self.closeButton, flexibleSpaceButton, self.backButton, fixedSpaceButton, self.forwardButton]];
     }
     // 开始添加标题栏
-    self.titlebar = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.view.frame.size.width, 120)]; //self.navigationController.navigationBar;
+    float offsetY=self.view.safeAreaLayoutGuide.layoutFrame.origin.y + 21.0 + self.view.safeAreaInsets.top;
+    self.titlebar = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.view.frame.size.width, TITLEBAR_HEIGHT + offsetY)]; //self.navigationController.navigationBar;
     UIColor *backgroundColor = nil;
     if(_browserOptions.background == nil) {
         backgroundColor = [UIColor whiteColor];
@@ -926,18 +924,19 @@ BOOL isExiting = FALSE;
     self.titlebar.tintColor =fontColor;
     
     // 返回按钮
-    self.titleBackButton =[[UIButton alloc] initWithFrame:CGRectMake(self.view.safeAreaInsets.left, 0, 44, 44)];
-    [self.titleBackButton setTitle:@"❮" forState:UIControlStateNormal];
+    self.titleBackButton =[[UIButton alloc] initWithFrame:CGRectMake(self.view.safeAreaInsets.left, offsetY, TITLEBAR_HEIGHT, TITLEBAR_HEIGHT)];
+    [self.titleBackButton setTitle:@"く" forState:UIControlStateNormal];
     [self.titleBackButton addTarget:self action:@selector(goBack:) forControlEvents:UIControlEventTouchUpInside];
+    self.titleBackButton.hidden = YES;
     if(_browserOptions.backbutton){
         [self.titlebar addSubview:self.titleBackButton];
     }
-    self.titleCloseButton =[[UIButton alloc] initWithFrame:CGRectMake(self.view.frame.size.width - 44 - self.view.safeAreaInsets.right, 0, 44, 44)];
-    [self.titleCloseButton setTitle:@"⊗" forState:UIControlStateNormal];
+    self.titleCloseButton =[[UIButton alloc] initWithFrame:CGRectMake(self.view.frame.size.width - TITLEBAR_HEIGHT - self.view.safeAreaInsets.right, offsetY, TITLEBAR_HEIGHT, TITLEBAR_HEIGHT)];
+    [self.titleCloseButton setTitle:@"ⓧ" forState:UIControlStateNormal];
     [self.titleCloseButton addTarget:self action:@selector(close) forControlEvents:UIControlEventTouchUpInside];
     [self.titlebar addSubview:self.titleCloseButton];
-    self.titleTitle = [[UILabel alloc] initWithFrame:CGRectMake(self.titleBackButton.frame.origin.x + self.titleBackButton.frame.size.width, 0,
-                                                                self.view.frame.size.width - 44 - self.view.safeAreaInsets.right - self.titleBackButton.frame.size.width - self.titleBackButton.frame.origin.x, 44)];
+    self.titleTitle = [[UILabel alloc] initWithFrame:CGRectMake(self.titleBackButton.frame.origin.x + self.titleBackButton.frame.size.width,offsetY,
+                                                                self.view.frame.size.width - TITLEBAR_HEIGHT - self.view.safeAreaInsets.right - self.titleBackButton.frame.size.width - self.titleBackButton.frame.origin.x, TITLEBAR_HEIGHT)];
     [self.titleTitle setText:@"加载中..."];
     self.titleTitle.textAlignment = NSTextAlignmentCenter;
     self.titleTitle.numberOfLines = 1;
@@ -1095,15 +1094,46 @@ BOOL isExiting = FALSE;
         }
     }
 }
+
+- (void)showTitleBar:(BOOL)show
+{
+    
+    BOOL titleBarVisible = !self.titlebar.hidden;
+    
+    // prevent double show/hide
+    if (show == !(self.titleBackButton.hidden)) {
+        return;
+    }
+    
+    if (show) {
+        self.titleBackButton.hidden = NO;
+        
+        CGRect webViewBounds = self.view.bounds;
+        webViewBounds.size.height -= TITLEBAR_HEIGHT;
+        webViewBounds.origin.y =TITLEBAR_HEIGHT;
+        [self setWebViewFrame:webViewBounds];
+    } else {
+//        self.titleBackButton.hidden = YES;
+//
+//        if (titleBarVisible) {
+//            CGRect webViewBounds = self.view.bounds;
+//            webViewBounds.size.height -= TOOLBAR_HEIGHT;
+//            [self setWebViewFrame:webViewBounds];
+//        } else {
+            [self setWebViewFrame:self.view.bounds];
+//        }
+    }
+}
 -(void) viewDidLayoutSubviews{
     [super viewDidLayoutSubviews];
     NSLog(@"viewDidLayoutSubviews");
-    self.rePositionViews;
+    [self rePositionViews];
 }
 - (void)viewDidLoad
 {
     viewRenderedAtLeastOnce = FALSE;
     [super viewDidLoad];
+    NSLog(@"viewDidLoad");
 }
 
 - (void)viewDidDisappear:(BOOL)animated
@@ -1121,7 +1151,7 @@ BOOL isExiting = FALSE;
 }
 
 - (BOOL)prefersStatusBarHidden {
-    return NO;
+    return !self.statusbar;
 }
 
 - (void)close
@@ -1169,16 +1199,6 @@ BOOL isExiting = FALSE;
 
 -  (void)viewWillAppear:(BOOL)animated
 {
-//    if (IsAtLeastiOSVersion(@"7.0") && !viewRenderedAtLeastOnce) {
-//        viewRenderedAtLeastOnce = TRUE;
-//        CGRect viewBounds = [self.webView bounds];
-//        int offsetY = _browserOptions.titlebar? 44 : 0 ;
-//        viewBounds.origin.y = offsetY ;
-//        viewBounds.size.height = viewBounds.size.height - offsetY;
-//        self.webView.frame = viewBounds;
-//        [[UIApplication sharedApplication] setStatusBarStyle:[self preferredStatusBarStyle]];
-//    }
-//    [self rePositionViews];
     [super viewWillAppear:animated];
 }
 
@@ -1194,40 +1214,14 @@ BOOL isExiting = FALSE;
 }
 
 - (void) rePositionViews {
-//     CGRect frame = self.view.frame;
-//     NSLog(@"self.view - frame - %@", NSStringFromCGRect(frame));
-//
-//     CGRect layoutFrame = self.view.safeAreaLayoutGuide.layoutFrame;
-//     NSLog(@"self.view - layoutFrame - %@", NSStringFromCGRect(layoutFrame));
-//
-//     UIEdgeInsets insets = self.view.safeAreaInsets;
-//     NSLog(@"self.view - insets - %@", NSStringFromUIEdgeInsets(insets));
-//
-//    // NSLog(@"mainScreen - %@ - %d", NSStringFromCGRect([UIScreen mainScreen].bounds),self.view.safeAreaInsets.top);
-//
- //  NSLog(@"_browserOptions::%d||%d||%d",_browserOptions.statusbar,_browserOptions.titlebar,[[UIApplication sharedApplication] statusBarFrame].size.height + [[UIApplication sharedApplication] statusBarFrame].origin.y);
-    self.view.frame = CGRectMake(0,(_browserOptions.titlebar || _browserOptions.statusbar)
-                                 ? [[UIApplication sharedApplication] statusBarFrame].size.height + [[UIApplication sharedApplication] statusBarFrame].origin.y
-                                 : 0,self.view.frame.size.width,[UIScreen mainScreen].bounds.size.height
-                                 -(_browserOptions.titlebar ? 44 : 0)
-                                 -((_browserOptions.titlebar || _browserOptions.statusbar)
-                                   ? [[UIApplication sharedApplication] statusBarFrame].size.height + [[UIApplication sharedApplication] statusBarFrame].origin.y: 0));
-    if(_browserOptions.titlebar){
-        [self.titlebar setFrame:CGRectMake(self.toolbar.frame.origin.x, 0, self.view.frame.size.width, 44)];
-        [self.titleBackButton setFrame:CGRectMake(self.view.safeAreaInsets.left, 0, 44, 44)];
-        [self.titleCloseButton setFrame:CGRectMake(self.view.frame.size.width - 44 - self.view.safeAreaInsets.right, 0, 44, 44)];
-        [self.titleTitle setFrame:CGRectMake(self.titleBackButton.frame.origin.x + self.titleBackButton.frame.size.width, 0,
-                                             self.view.frame.size.width - 44 - self.view.safeAreaInsets.right - self.titleBackButton.frame.size.width - self.titleBackButton.frame.origin.x, 44)];
-        [self.webView setFrame:CGRectMake(self.webView.frame.origin.x, 44 , self.webView.frame.size.width, self.webView.frame.size.height)];
-    }else if ([_browserOptions.toolbarposition isEqualToString:kInAppBrowserToolbarBarPositionTop]) {
-        [self.webView setFrame:CGRectMake(self.webView.frame.origin.x, TOOLBAR_HEIGHT , self.webView.frame.size.width, self.webView.frame.size.height)];
+    if ([_browserOptions.toolbarposition isEqualToString:kInAppBrowserToolbarBarPositionTop]) {
+        [self.webView setFrame:CGRectMake(self.webView.frame.origin.x, TOOLBAR_HEIGHT, self.webView.frame.size.width, self.webView.frame.size.height)];
         [self.toolbar setFrame:CGRectMake(self.toolbar.frame.origin.x, [self getStatusBarOffset], self.toolbar.frame.size.width, self.toolbar.frame.size.height)];
     }
 }
 
 // Helper function to convert hex color string to UIColor
 // Assumes input like "#00FF00" (#RRGGBB).
-// Taken from https://stackoverflow.com/questions/1560081/how-can-i-create-a-uicolor-from-a-hex-string
 - (UIColor *)colorFromHexString:(NSString *)hexString {
     unsigned rgbValue = 0;
     NSScanner *scanner = [NSScanner scannerWithString:hexString];

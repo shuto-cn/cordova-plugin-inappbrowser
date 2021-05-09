@@ -93,4 +93,7 @@
 
 - (id)initWithBrowserOptions: (CDVInAppBrowserOptions*) browserOptions andSettings:(NSDictionary*) settings andParent:(UIViewController*) parent;
 
+
+
+- (void)showTitleBar:(BOOL)show;
 @end
