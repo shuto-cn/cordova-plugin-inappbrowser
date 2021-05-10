@@ -1109,19 +1109,12 @@ BOOL isExiting = FALSE;
         self.titleBackButton.hidden = NO;
         
         CGRect webViewBounds = self.view.bounds;
-        webViewBounds.size.height -= TITLEBAR_HEIGHT;
-        webViewBounds.origin.y =TITLEBAR_HEIGHT;
+        float offsetY=self.view.safeAreaLayoutGuide.layoutFrame.origin.y + 21.0 + self.view.safeAreaInsets.top + TITLEBAR_HEIGHT;
+        webViewBounds.size.height -= offsetY;
+        webViewBounds.origin.y =offsetY;
         [self setWebViewFrame:webViewBounds];
     } else {
-//        self.titleBackButton.hidden = YES;
-//
-//        if (titleBarVisible) {
-//            CGRect webViewBounds = self.view.bounds;
-//            webViewBounds.size.height -= TOOLBAR_HEIGHT;
-//            [self setWebViewFrame:webViewBounds];
-//        } else {
-            [self setWebViewFrame:self.view.bounds];
-//        }
+        [self setWebViewFrame:self.view.bounds];
     }
 }
 -(void) viewDidLayoutSubviews{
