@@ -70,6 +70,7 @@
 @property (nonatomic, strong) IBOutlet UIBarButtonItem* forwardButton;
 @property (nonatomic, strong) IBOutlet UIActivityIndicatorView* spinner;
 @property (nonatomic, strong) IBOutlet UIToolbar* toolbar;
+@property (nonatomic, strong) IBOutlet UIView*statusbar;
 @property (nonatomic, strong) IBOutlet UIView*titlebar;
 @property (nonatomic, strong) IBOutlet UIButton*titleBackButton;
 @property (nonatomic, strong) IBOutlet UIButton*titleCloseButton;
@@ -80,20 +81,23 @@
 @property (nonatomic, weak) CDVWKInAppBrowser* navigationDelegate;
 @property (nonatomic) NSURL* currentURL;
 
-@property (nonatomic) BOOL* statusbar;
+@property (nonatomic) BOOL* hasStatusbar;
+@property (nonatomic) BOOL* hasLocationbar;
+@property (nonatomic) BOOL* hasToolbar;
+@property (nonatomic) BOOL* hasTitlebar;
+
 
 - (void)close;
 - (void)navigateTo:(NSURL*)url;
 - (void)showStatusbar:(BOOL)show;
 - (int)statusbarHieght;
 - (void)showLocationBar:(BOOL)show;
-- (void)showToolBar:(BOOL)show : (NSString *) toolbarPosition;
+- (void)showToolBar:(BOOL)show;
 - (void)setCloseButtonTitle:(NSString*)title : (NSString*) colorString : (int) buttonIndex;
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context;
 
 - (id)initWithBrowserOptions: (CDVInAppBrowserOptions*) browserOptions andSettings:(NSDictionary*) settings andParent:(UIViewController*) parent;
 
-
-
 - (void)showTitleBar:(BOOL)show;
+- (void)resetWebviewSize: (NSString *) toolbarPosition;
 @end
